@@ -28,131 +28,101 @@ module.exports = function(app) {
  console.log("--------------------");
       */
 
-    axios
-      .get("https://www.alphavantage.co/query", {
-        params: {
-          function: "GLOBAL_QUOTE",
-          symbol: req.query.stock,
-          apikey: "GIXVFXXXUWZ78ZDG"
-        }
-      })
-      .then(function(response) {
-        var quote = response.data["Global Quote"];
-        var stockData = {
-          stockData: {
-            stock: quote["01. symbol"],
-            price: quote["05. price"],
-            likes: 1
+    // if like===true
+    // connect to the database and check if the queried symbol exists
+    // if not: create it and then push user's ip into the ips array
+    // if is: execute findSymbolThenAddIp function providing ip and symbol ino it
+
+    if (!Array.isArray(req.query.stock)) {
+      axios
+        .get("https://www.alphavantage.co/query", {
+          params: {
+            function: "GLOBAL_QUOTE",
+            symbol: req.query.stock,
+            apikey: "GIXVFXXXUWZ78ZDG"
           }
-        };
-        res.json(stockData);
-      })
-      .catch(function(error) {
-        console.log(error);
-      })
-      .then(function() {});
+        })
+        .then(function(response) {
+          var quote = response.data["Global Quote"];
+          var stock = quote["01. symbol"];
+          var price = quote["05. price"];
+          if (!stock) {
+            res.send("incorrect quote symbol");
+          }
 
-    /*
+          if (req.query.like) {
+          } else {
+          }
 
- if (!Array.isArray(req.query.stock)){
+          var stockData = {
+            stockData: {
+              stock,
+              price,
+              likes: 1
+            }
+          };
 
+          res.json(stockData);
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    } else {
+      var stockData = { stockData: [] };
 
-      axios.get('https://www.alphavantage.co/query', {
-    params: {
-      function: "GLOBAL_QUOTE",
-      symbol: req.query.stock,
-      apikey: "GIXVFXXXUWZ78ZDG"
+      axios
+        .get("https://www.alphavantage.co/query", {
+          params: {
+            function: "GLOBAL_QUOTE",
+            symbol: req.query.stock[0],
+            apikey: "GIXVFXXXUWZ78ZDG"
+          }
+        })
+        .then(function(response) {
+          var quote = response.data["Global Quote"];
+          var stock = quote["01. symbol"];
+          var price = quote["05. price"];
+          if (!stock) {
+            res.send("incorrect quote symbol");
+          }
+          stockData["stockData"][0] = {
+            stock,
+            price,
+            likes: 1
+          };
+          // res.json(stockData);
+        })
+        .catch(function(error) {
+          console.log(error);
+        })
+        .finally(function() {
+          // always executed
+          axios
+            .get("https://www.alphavantage.co/query", {
+              params: {
+                function: "GLOBAL_QUOTE",
+                symbol: req.query.stock[1],
+                apikey: "GIXVFXXXUWZ78ZDG"
+              }
+            })
+            .then(function(response) {
+              var quote = response.data["Global Quote"];
+              var stock = quote["01. symbol"];
+              var price = quote["05. price"];
+              if (!stock) {
+                res.send("incorrect quote symbol");
+              }
+              stockData["stockData"][1] = {
+                stock,
+                price,
+                likes: 1
+              };
+              res.json(stockData);
+            })
+            .catch(function(error) {
+              console.log(error);
+            });
+        });
     }
-  })
-  .then(function (response) {
-    var quote = response.data["Global Quote"];
-    var stockData = {"stockData":
-                     {"stock": quote["01. symbol"],
-                      "price": quote["05. price"],
-                      "likes":1}}
-    res.json(stockData);
-  })
-  .catch(function (error) {
-    console.log(error);
-  })
-
-
-
-
-
-
-
- } else {
-
- var stockData = {"stockData": []};
-
-
-
-
-
-      axios.get('https://www.alphavantage.co/query', {
-    params: {
-      function: "GLOBAL_QUOTE",
-      symbol: req.query.stock[0],
-      apikey: "GIXVFXXXUWZ78ZDG"
-    }
-  })
-  .then(function (response) {
-    var quote = response.data["Global Quote"];
-    stockData["stockData"][0]= {"stock": quote["01. symbol"], "price": quote["05. price"], "likes":1}
-    // res.json(stockData);
-
-
-
-
-
-
-
-  })
-  .catch(function (error) {
-    console.log(error);
-  })
- .finally(function () {
-    // always executed
-         axios.get('https://www.alphavantage.co/query', {
-    params: {
-      function: "GLOBAL_QUOTE",
-      symbol: req.query.stock[1],
-      apikey: "GIXVFXXXUWZ78ZDG"
-    }
-  })
-  .then(function (response) {
-    var quote = response.data["Global Quote"];
-    stockData["stockData"][1]= {"stock": quote["01. symbol"], "price": quote["05. price"], "likes":1}
-     res.json(stockData);
-
-
-
-
-
-
-  })
-  .catch(function (error) {
-    console.log(error);
-  })
-  });
-
-
-
-
-
-
-
-
-
-
-
-
-
- }
-
-
-
-    */
   });
 };
