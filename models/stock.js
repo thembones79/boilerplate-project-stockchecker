@@ -2,22 +2,11 @@ var mongoose = require("mongoose");
 
 // Stock Schema
 var stockSchema = mongoose.Schema({
-  userId: {
+  symbol: {
     type: String,
     required: true
   },
-  description: {
-    type: String,
-    required: true
-  },
-  duration: {
-    type: Number,
-    required: true
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  }
+  ips: [String]
 });
 
 var Stock = (module.exports = mongoose.model("Stock", stockSchema));
@@ -35,6 +24,11 @@ module.exports.getStocksByQueryObject = function(obj) {
     .select(obj.filterObject);
 };
 
+// Get Stock by Symbol
+module.exports.getStockBySymbol = function(symbol, callback) {
+  Stock.find({ symbol }, callback);
+};
+
 // Get Stock
 module.exports.getStockById = function(id, callback) {
   Stock.findById(id, callback);
@@ -46,12 +40,43 @@ module.exports.addStock = function(stock, callback) {
 };
 
 //Update Stock
-module.exports.updateStock = function(id, stock, options, callback) {
-  var query = { _id: id };
+module.exports.updateStock = function(symbol, stock, options, callback) {
+  var query = { symbol };
   var update = {
     name: stock.name
   };
   Stock.findOneAndUpdate(query, update, options, callback);
+};
+
+module.exports.findSymbolThenAddIp = function(symbol, ip) {
+  Stock.find({ symbol }, (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+
+    if (data.ips.indexOf(ip) === -1) {
+      data.ips.push(ip);
+      data.save((err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(null, data);
+        }
+      });
+    } else {
+      console.log("ip already exists");
+    }
+  });
+};
+
+module.exports.findSymbolAndGetNoOfIps = function(symbol) {
+  Stock.find({ symbol }, (err, data) => {
+    if (err) {
+      return 0;
+    }
+
+    return data.ips.length;
+  });
 };
 
 //Delete Stock

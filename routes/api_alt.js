@@ -46,19 +46,44 @@ module.exports = function(app) {
           var quote = response.data["Global Quote"];
           var stock = quote["01. symbol"];
           var price = quote["05. price"];
+          var likes = 0;
+
+          // check if symbol is ok
           if (!stock) {
             res.send("incorrect quote symbol");
           }
 
+          // find stock in db and (if exists) return likes as a length of ips array
+          likes = Stock.findSymbolAndGetNoOfIps(stock);
+          console.log({ likes });
+
           if (req.query.like) {
-          } else {
+            Stock.getStockBySymbol(stock, function(err, data) {
+              if (err) {
+                console.log({ err });
+              }
+
+              console.log({ data });
+            });
+
+            // create stock in the database
+
+            /*
+            Stock.addStock({symbol: stock, ips: []}, function(err, data) {
+            if (err) {
+            res.send(err.errmsg);
+            console.log(err.errmsg);
+              }
+            console.log(data);
+            });
+            */
           }
 
           var stockData = {
             stockData: {
               stock,
               price,
-              likes: 1
+              likes
             }
           };
 
