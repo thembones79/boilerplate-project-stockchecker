@@ -68,12 +68,12 @@ module.exports.findSymbolThenAddIp = function(symbol, ip, callback) {
           console.log(err);
         } else {
           console.log({ new_data: data });
-          callback;
+          callback();
         }
       });
     } else {
       console.log("ip already exists");
-      callback;
+      callback();
     }
   });
 };
