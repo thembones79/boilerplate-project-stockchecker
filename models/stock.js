@@ -48,39 +48,42 @@ module.exports.updateStock = function(symbol, stock, options, callback) {
   Stock.findOneAndUpdate(query, update, options, callback);
 };
 
-module.exports.findSymbolThenAddIp = function(symbol, ip) {
+module.exports.findSymbolThenAddIp = function(symbol, ip, callback) {
   Stock.find({ symbol }, (err, data) => {
+    console.log({ older_data: data });
+    console.log({ ip });
+    console.log({ indexOfIp: data[0].ips.indexOf(ip) });
+    console.log({ niggalicious: data[0].symbol });
+
     if (err) {
-      console.log(err);
+      console.log({ err });
     }
 
-    if (data.ips.indexOf(ip) === -1) {
-      data.ips.push(ip);
-      data.save((err, data) => {
+    if (data[0].ips.indexOf(ip) === -1) {
+      console.log("inside if");
+      data[0].ips.push(ip);
+      console.log({ old_data: data[0].ips });
+      data[0].save((err, data) => {
         if (err) {
           console.log(err);
         } else {
-          console.log(null, data);
+          console.log({ new_data: data });
+          callback;
         }
       });
     } else {
       console.log("ip already exists");
+      callback;
     }
   });
 };
 
-module.exports.findSymbolAndGetNoOfIps = function(symbol) {
+module.exports.findSymbolAndGetNoOfIps = function(symbol, callback) {
   Stock.find({ symbol }, (err, data) => {
     if (err) {
-      return 0;
+      console.log({ err });
     }
-
-    return data.ips.length;
+    console.log({ xdata: data[0].ips.length });
+    callback(data[0].ips.length);
   });
-};
-
-//Delete Stock
-module.exports.deleteStock = function(id, callback) {
-  var query = { _id: id };
-  Stock.remove(query, callback);
 };

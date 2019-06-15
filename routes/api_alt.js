@@ -11,22 +11,20 @@
 var expect = require("chai").expect;
 var MongoClient = require("mongodb");
 var Stock = require("../models/stock");
-
-const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
+var mongoose = require("mongoose");
 const axios = require("axios");
+
+// Connect to mongoose
+mongoose.connect(process.env.DB, {
+  useNewUrlParser: true
+});
+mongoose.set("useCreateIndex", true);
+var db = mongoose.connection;
 
 module.exports = function(app) {
   app.route("/api/stock-prices").get(function(req, res) {
-    /*
-  var ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress; //works also for proxy cases (source: https://stackfame.com/get-ip-address-node)
-  var ipaddress = ip.split(",")[0]; //trimmed the fat :)
-
- console.log("--------------------");
- console.log(ip);
- console.log("--------------------");
- console.log(ipaddress);
- console.log("--------------------");
-      */
+    var ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress; //works also for proxy cases (source: https://stackfame.com/get-ip-address-node)
+    var ipaddress = ip.split(",")[0]; //trimmed the fat :)
 
     // if like===true
     // connect to the database and check if the queried symbol exists
@@ -53,8 +51,7 @@ module.exports = function(app) {
             res.send("incorrect quote symbol");
           }
 
-          // find stock in db and (if exists) return likes as a length of ips array
-          likes = Stock.findSymbolAndGetNoOfIps(stock);
+
           console.log({ likes });
 
           if (req.query.like) {
@@ -63,31 +60,42 @@ module.exports = function(app) {
                 console.log({ err });
               }
 
-              console.log({ data });
-            });
+              console.log({ data1: data });
 
-            // create stock in the database
+              // check if stock with given symbol exists
+              if (data.length) {
+                // try to add ip to the stock (add if it is not already exists)
+                Stock.findSymbolThenAddIp(stock, ipaddress);
+              } else {
+                // create stock in the database and add ip to it
 
-            /*
-            Stock.addStock({symbol: stock, ips: []}, function(err, data) {
-            if (err) {
-            res.send(err.errmsg);
-            console.log(err.errmsg);
+                Stock.addStock({ symbol: stock, ips: [ipaddress] }, function(
+                  err,
+                  data
+                ) {
+                  if (err) {
+                    res.send(err.errmsg);
+                    console.log(err.errmsg);
+                  }
+                  console.log({ data2: data });
+                });
               }
-            console.log(data);
             });
-            */
           }
 
-          var stockData = {
-            stockData: {
-              stock,
-              price,
-              likes
-            }
-          };
+          Stock.findSymbolAndGetNoOfIps(stock, ips => {
+            likes = ips;
 
-          res.json(stockData);
+            var stockData = {
+              stockData: {
+                stock,
+                price,
+                likes
+              }
+            };
+            console.log(stockData);
+            res.json(stockData);
+          });
         })
         .catch(function(error) {
           console.log(error);
