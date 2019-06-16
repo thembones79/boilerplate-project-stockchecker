@@ -120,15 +120,58 @@ module.exports = function(app) {
           var quote = response.data["Global Quote"];
           var stock = quote["01. symbol"];
           var price = quote["05. price"];
+          var createStockDataArray = function(ips) {
+            var likes = ips;
+
+            stockData["stockData"][0] = {
+              stock,
+              price,
+              likes
+            };
+            console.log(stockData);
+            //res.json(stockData);
+          };
+
+          // check if symbol is ok
           if (!stock) {
             res.send("incorrect quote symbol");
           }
-          stockData["stockData"][0] = {
-            stock,
-            price,
-            likes: 1
-          };
-          // res.json(stockData);
+
+          function oral() {
+            Stock.findSymbolAndGetNoOfIps(stock, createStockDataArray);
+          }
+
+          if (req.query.like) {
+            Stock.getStockBySymbol(stock, function(err, data) {
+              if (err) {
+                console.log({ err });
+              }
+
+              console.log({ data1: data });
+
+              // check if stock with given symbol exists
+              if (data.length) {
+                // try to add ip to the stock (add if it is not already exists)
+                Stock.findSymbolThenAddIp(stock, ipaddress, oral);
+              } else {
+                // create stock in the database and add ip to it
+
+                Stock.addStock({ symbol: stock, ips: [ipaddress] }, function(
+                  err,
+                  data
+                ) {
+                  if (err) {
+                    res.send(err.errmsg);
+                    console.log(err.errmsg);
+                  }
+                  console.log({ data2: data });
+                  oral();
+                });
+              }
+            });
+          } else {
+            oral();
+          }
         })
         .catch(function(error) {
           console.log(error);
@@ -147,15 +190,61 @@ module.exports = function(app) {
               var quote = response.data["Global Quote"];
               var stock = quote["01. symbol"];
               var price = quote["05. price"];
+              var createAndReturnStockDataArray = function(ips) {
+                var likes = ips;
+
+                stockData["stockData"][1] = {
+                  stock,
+                  price,
+                  likes
+                };
+                console.log(stockData);
+                res.json(stockData);
+              };
+
+              // check if symbol is ok
               if (!stock) {
                 res.send("incorrect quote symbol");
               }
-              stockData["stockData"][1] = {
-                stock,
-                price,
-                likes: 1
-              };
-              res.json(stockData);
+
+              function oral() {
+                Stock.findSymbolAndGetNoOfIps(
+                  stock,
+                  createAndReturnStockDataArray
+                );
+              }
+
+              if (req.query.like) {
+                Stock.getStockBySymbol(stock, function(err, data) {
+                  if (err) {
+                    console.log({ err });
+                  }
+
+                  console.log({ data1: data });
+
+                  // check if stock with given symbol exists
+                  if (data.length) {
+                    // try to add ip to the stock (add if it is not already exists)
+                    Stock.findSymbolThenAddIp(stock, ipaddress, oral);
+                  } else {
+                    // create stock in the database and add ip to it
+
+                    Stock.addStock(
+                      { symbol: stock, ips: [ipaddress] },
+                      function(err, data) {
+                        if (err) {
+                          res.send(err.errmsg);
+                          console.log(err.errmsg);
+                        }
+                        console.log({ data2: data });
+                        oral();
+                      }
+                    );
+                  }
+                });
+              } else {
+                oral();
+              }
             })
             .catch(function(error) {
               console.log(error);

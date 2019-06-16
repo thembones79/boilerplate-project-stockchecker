@@ -44,15 +44,33 @@ module.exports = function(app) {
           var quote = response.data["Global Quote"];
           var stock = quote["01. symbol"];
           var price = quote["05. price"];
-          var likes = 0;
+          var createAndReturnStockDataObject = function(ips) {
+            var likes = ips;
+
+            var stockData = {
+              stockData: {
+                stock,
+                price,
+                likes
+              }
+            };
+            console.log(stockData);
+            res.json(stockData);
+          };
+
+          function jsonResult() {
+            Stock.findSymbolAndGetNoOfIps(
+              stock,
+              createAndReturnStockDataObject
+            );
+          }
+
 
           // check if symbol is ok
           if (!stock) {
             res.send("incorrect quote symbol");
           }
 
-
-          console.log({ likes });
 
           if (req.query.like) {
             Stock.getStockBySymbol(stock, function(err, data) {
@@ -65,7 +83,7 @@ module.exports = function(app) {
               // check if stock with given symbol exists
               if (data.length) {
                 // try to add ip to the stock (add if it is not already exists)
-                Stock.findSymbolThenAddIp(stock, ipaddress);
+                Stock.findSymbolThenAddIp(stock, ipaddress, jsonResult);
               } else {
                 // create stock in the database and add ip to it
 
@@ -78,28 +96,19 @@ module.exports = function(app) {
                     console.log(err.errmsg);
                   }
                   console.log({ data2: data });
+                  jsonResult();
                 });
               }
             });
+          } else {
+            jsonResult();
           }
-
-          Stock.findSymbolAndGetNoOfIps(stock, ips => {
-            likes = ips;
-
-            var stockData = {
-              stockData: {
-                stock,
-                price,
-                likes
-              }
-            };
-            console.log(stockData);
-            res.json(stockData);
-          });
         })
         .catch(function(error) {
           console.log(error);
-        });
+        })
+        .finally(function(){});
+
     } else {
       var stockData = { stockData: [] };
 
@@ -123,13 +132,13 @@ module.exports = function(app) {
             price,
             likes: 1
           };
-          // res.json(stockData);
+
         })
         .catch(function(error) {
           console.log(error);
         })
         .finally(function() {
-          // always executed
+
           axios
             .get("https://www.alphavantage.co/query", {
               params: {
