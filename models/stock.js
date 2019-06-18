@@ -39,7 +39,6 @@ module.exports.findSymbolThenAddIp = function(symbol, ip, callback) {
         }
       });
     } else {
-      console.log("ip already exists");
       callback();
     }
   });
