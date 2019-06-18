@@ -17,6 +17,7 @@ chai.use(chaiHttp);
 suite("Functional Tests", function() {
   suite("GET /api/stock-prices => stockData object", function() {
     test("1 stock", function(done) {
+      this.enableTimeouts(false);
       chai
         .request(server)
         .get("/api/stock-prices")
@@ -38,6 +39,7 @@ suite("Functional Tests", function() {
     });
 
     test("1 stock with like", function(done) {
+      this.enableTimeouts(false);
       chai
         .request(server)
         .get("/api/stock-prices")
@@ -67,6 +69,7 @@ suite("Functional Tests", function() {
     });
 
     test("1 stock with like again (ensure likes arent double counted)", function(done) {
+      this.enableTimeouts(false);
       chai
         .request(server)
         .get("/api/stock-prices")
@@ -97,8 +100,78 @@ suite("Functional Tests", function() {
         });
     });
 
-    test("2 stocks", function(done) {});
+    test("2 stocks", function(done) {
+      this.enableTimeouts(false);
+      chai
+        .request(server)
+        .get("/api/stock-prices")
+        .query({ stock: ["goog", "msft"] })
+        .end(function(err, res) {
+          assert.equal(res.status, 200);
+          assert.isObject(res.body, "body must be an object");
+          assert.isArray(res.body.stockData, "stockData must be an array");
+          assert.equal(res.body.stockData[0].stock, "GOOG");
+          assert.equal(res.body.stockData[1].stock, "MSFT");
+          assert.isNumber(
+            parseFloat(res.body.stockData[0].price),
+            "the price must be a number"
+          );
+          assert.isNumber(
+            parseFloat(res.body.stockData[1].price),
+            "the price must be a number"
+          );
+          assert.isNumber(
+            res.body.stockData[0].rel_likes,
+            "the rel_likes must be a number"
+          );
+          assert.isNumber(
+            res.body.stockData[1].rel_likes,
+            "the rel_likes must be a number"
+          );
+          assert.equal(
+            res.body.stockData[1].rel_likes,
+            -1 * res.body.stockData[0].rel_likes,
+            "rel_likes of one stock must be equal to -rel_likes of the second"
+          );
+          done();
+        });
+    });
 
-    test("2 stocks with like", function(done) {});
+    test("2 stocks with like", function(done) {
+      this.enableTimeouts(false);
+      chai
+        .request(server)
+        .get("/api/stock-prices")
+        .query({ stock: ["goog", "msft"], like: true })
+        .end(function(err, res) {
+          assert.equal(res.status, 200);
+          assert.isObject(res.body, "body must be an object");
+          assert.isArray(res.body.stockData, "stockData must be an array");
+          assert.equal(res.body.stockData[0].stock, "GOOG");
+          assert.equal(res.body.stockData[1].stock, "MSFT");
+          assert.isNumber(
+            parseFloat(res.body.stockData[0].price),
+            "the price must be a number"
+          );
+          assert.isNumber(
+            parseFloat(res.body.stockData[1].price),
+            "the price must be a number"
+          );
+          assert.isNumber(
+            res.body.stockData[0].rel_likes,
+            "the rel_likes must be a number"
+          );
+          assert.isNumber(
+            res.body.stockData[1].rel_likes,
+            "the rel_likes must be a number"
+          );
+          assert.equal(
+            res.body.stockData[1].rel_likes,
+            -1 * res.body.stockData[0].rel_likes,
+            "rel_likes of one stock must be equal to -rel_likes of the second"
+          );
+          done();
+        });
+    });
   });
 });
